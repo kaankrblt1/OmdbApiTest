@@ -6,60 +6,72 @@ import jdk.jfr.Description;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.emptyOrNullString;
+import static org.hamcrest.Matchers.not;
+import static io.restassured.RestAssured.*;
 
 public class Test extends BasePage {
     public static List<String> BySearch() {
+        try {
+            Response response = given()
+                    .param("apikey", "d25400cc")
+                    .param("s", "Harry Potter")
+                    .when()
+                    .log().all().get().prettyPeek()
+                    .then()
+                    .statusCode(200).extract().response();
+            int titleSize = Integer.parseInt(response.jsonPath().getString("Search.Title.size()"));
+            int size = 0;
+            String imdbId = null;
+            String title = null;
+            List<String> SorcererSizeList = new ArrayList<>();
 
-        Response response = given()
-                .param("apikey", "d25400cc")
-                .param("s", "Harry Potter")
-                .when()
-                .log().all().get().prettyPeek()
-                .then()
-                .statusCode(200).extract().response();
+            while (size < titleSize) {
+                title = response.jsonPath().getString("Search.Title[" + size + "]");
 
-        int titleSize = Integer.parseInt(response.jsonPath().getString("Search.Title.size()"));
-        int size = 0;
-        String imdbId = null;
-        String title = null;
-        List<String> SorcererSizeList = new ArrayList<>();
+                if (title.contains("Harry Potter and the Sorcerer's Stone")) {
 
-        while (size < titleSize) {
-            title = response.jsonPath().getString("Search.Title[" + size + "]");
-
-            if (title.contains("Harry Potter and the Sorcerer's Stone")) {
-
-                imdbId = response.jsonPath().getString("Search.imdbID[" + size + "]");
-                break;
+                    imdbId = response.jsonPath().getString("Search.imdbID[" + size + "]");
+                    break;
+                }
+                size++;
             }
-            size++;
+
+            SorcererSizeList.add(title);
+            SorcererSizeList.add(imdbId);
+
+            return SorcererSizeList;
+        } catch (Exception ex) {
+            System.out.println("Error:" + ex.getMessage());
+            return null;
         }
-
-        SorcererSizeList.add(title);
-        SorcererSizeList.add(imdbId);
-
-        return SorcererSizeList;
-
     }
 
-    public static void ByIdOrTitle(String imdbId) {
-        Response response = given()
-                .param("apikey", "d25400cc")
-                .param("i", imdbId)
-                .when()
-                .log().all().get().prettyPeek()
-                .then()
-                .statusCode(200).extract().response();
+    public static void ByIdorTitle(String imdbId) {
+        try {
+            Response response = given()
+                    .param("apikey", "d25400cc")
+                    .param("i", imdbId)
+                    .when()
+                    .log().all().get().prettyPeek()
+                    .then()
+                    .statusCode(200)
+                    .body("Title", not(emptyOrNullString()))
+                    .body("Year", not(emptyOrNullString()))
+                    .body("Released", not(emptyOrNullString()))
+                    .extract().response();
+        } catch (Exception ex) {
+            System.out.println("Error:" + ex.getMessage());
+        }
     }
 
     @org.junit.Test
-    @Description("Testing BySearch adn ByIdOrTitle")
+    @Description("Testing BySearch and ByIDorTitle")
     public void TestScenario() {
-        System.out.println("By Search");
+        System.out.println("---By Search---");
         List<String> List = BySearch();
 
-        System.out.println("By Id Or Title");
-        ByIdOrTitle(List.get(1));
+        System.out.println("---By Id Or Title---");
+        ByIdorTitle(List.get(1));
     }
 }
