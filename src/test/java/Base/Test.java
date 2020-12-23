@@ -9,7 +9,6 @@ import java.util.List;
 import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static io.restassured.RestAssured.*;
-import static org.junit.Assert.assertNotEquals;
 
 public class Test extends BasePage {
     public static List<String> BySearch() {
